@@ -40,9 +40,7 @@ let swap hp ix1 ix2 =
 
 let rec bubble_up hp ix = 
   let p = parent ix in
-  if p = -1 then 
-    ()
-  else if hp.queue.(p) > hp.queue.(ix) then
+  if p > 0 && hp.queue.(p) > hp.queue.(ix) then
   (
     swap hp ix p;
     bubble_up hp p

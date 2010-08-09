@@ -59,7 +59,7 @@ func insert(h *Heap, x int) {
 	bubble_up(h, h.n)
 }
 
-func make_heap(s []int, n int) *Heap {
+func make_heap(s []int) *Heap {
 	h := newHeap()
 	for _, v := range s {
 		insert(h, v)
@@ -68,7 +68,7 @@ func make_heap(s []int, n int) *Heap {
 	return h
 }
 
-func min_ix(h *heap, ix1, ix2 int) int {
+func min_ix(h *Heap, ix1, ix2 int) int {
 	if h.queue[ix1] < h.queue[ix2] {
 		return ix1
 	}
@@ -76,8 +76,69 @@ func min_ix(h *heap, ix1, ix2 int) int {
 	return ix2
 }
 
+func local_min_ix(h *Heap, ix int) int {
+	ch := young_child(ix)
+	if ch + 1 <= h.n {
+		return min_ix(h, ix, min_ix(h, ch, ch+1))
+	} else if ch <= h.n {
+		return min_ix(h, ix, ch)
+	}
+
+	return ix
+}
+
+func bubble_down(h *Heap, ix int) {
+	min_ix := local_min_ix(h, ix)
+	if min_ix != ix {
+		swap(h, ix, min_ix)
+		bubble_down(h, min_ix)
+	}
+}
+
+func extract_min(h *Heap) int {
+	if h.n <= 0 {
+		fmt.Printf("extract_min called on Empty heap\n")
+		return -1
+	}
+	
+	min := h.queue[1]
+	h.queue[1] = h.queue[h.n]
+	h.n = h.n - 1
+	bubble_down(h, 1)
+
+	return min
+}
+
+func heap_sort(s []int) {
+	h := make_heap(s)
+	for i, _ := range s {
+		s[i] = extract_min(h)
+	}
+}
+
+func print_heap(h *Heap) {
+	fmt.Printf("[")
+	for i := 1; i < h.n; i++ {
+		fmt.Printf("%d ", h.queue[i])
+	}
+	fmt.Printf("%d]\n", h.queue[i])
+}
+
 func main() {
 	s := []int{77, 33, 45, 12, 89, 135, 66, 111, 902}
+	//h := make_heap(s)
 
-	fmt.Printf("shong")
+	fmt.Printf("Initial array: ")
+	for _, v := range s {
+		fmt.Printf("%d ", v)
+	}
+	fmt.Printf("\n")
+
+	heap_sort(s)
+
+	fmt.Printf("Sorted array: ")
+	for _, v := range s {
+		fmt.Printf("%d ", v)
+	}
+	fmt.Printf("\n")
 }
