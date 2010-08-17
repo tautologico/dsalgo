@@ -1,13 +1,13 @@
-/***
- * 
- * impheap.go
- * Imperative heap implemented using arrays
- * Based on the priority queue implementation in 
- * "The Algorithm Design Manual", 2nd edition, by Steve Skiena
- * 
- * Andrei de A. Formiga, 2010-08-09
- *
- ********************************************************************/
+/*
+ 
+   impheap.go
+   Imperative heap implemented using arrays
+   Based on the priority queue implementation in 
+   "The Algorithm Design Manual", 2nd edition, by Steve Skiena
+  
+   Andrei de A. Formiga, 2010-08-09
+ 
+*/
 
 package main
 
@@ -35,7 +35,7 @@ func parent(n int) int {
 	return n / 2		// implicitly floor(n/2)
 }
 
-func young_child(n int) int {
+func youngChild(n int) int {
 	return n*2
 }
 
@@ -45,21 +45,21 @@ func swap(h *Heap, ix1, ix2 int) {
 	h.queue[ix2] = tmp
 }
 
-func bubble_up(h *Heap, ix int) {
+func bubbleUp(h *Heap, ix int) {
 	p := parent(ix)
 	if p > 0 && h.queue[p] > h.queue[ix] {
 		swap(h, p, ix)
-		bubble_up(h, p)
+		bubbleUp(h, p)
 	}
 }
 
 func insert(h *Heap, x int) {
 	h.n = h.n + 1
 	h.queue[h.n] = x
-	bubble_up(h, h.n)
+	bubbleUp(h, h.n)
 }
 
-func make_heap(s []int) *Heap {
+func makeHeap(s []int) *Heap {
 	h := newHeap()
 	for _, v := range s {
 		insert(h, v)
@@ -68,7 +68,7 @@ func make_heap(s []int) *Heap {
 	return h
 }
 
-func min_ix(h *Heap, ix1, ix2 int) int {
+func minIx(h *Heap, ix1, ix2 int) int {
 	if h.queue[ix1] < h.queue[ix2] {
 		return ix1
 	}
@@ -76,26 +76,26 @@ func min_ix(h *Heap, ix1, ix2 int) int {
 	return ix2
 }
 
-func local_min_ix(h *Heap, ix int) int {
-	ch := young_child(ix)
+func localMinIx(h *Heap, ix int) int {
+	ch := youngChild(ix)
 	if ch + 1 <= h.n {
-		return min_ix(h, ix, min_ix(h, ch, ch+1))
+		return minIx(h, ix, minIx(h, ch, ch+1))
 	} else if ch <= h.n {
-		return min_ix(h, ix, ch)
+		return minIx(h, ix, ch)
 	}
 
 	return ix
 }
 
-func bubble_down(h *Heap, ix int) {
-	min_ix := local_min_ix(h, ix)
-	if min_ix != ix {
-		swap(h, ix, min_ix)
-		bubble_down(h, min_ix)
+func bubbleDown(h *Heap, ix int) {
+	minIx := localMinIx(h, ix)
+	if minIx != ix {
+		swap(h, ix, minIx)
+		bubbleDown(h, minIx)
 	}
 }
 
-func extract_min(h *Heap) int {
+func extractMin(h *Heap) int {
 	if h.n <= 0 {
 		fmt.Printf("extract_min called on Empty heap\n")
 		return -1
@@ -104,24 +104,24 @@ func extract_min(h *Heap) int {
 	min := h.queue[1]
 	h.queue[1] = h.queue[h.n]
 	h.n = h.n - 1
-	bubble_down(h, 1)
+	bubbleDown(h, 1)
 
 	return min
 }
 
-func heap_sort(s []int) {
-	h := make_heap(s)
+func heapSort(s []int) {
+	h := makeHeap(s)
 	for i, _ := range s {
-		s[i] = extract_min(h)
+		s[i] = extractMin(h)
 	}
 }
 
-func print_heap(h *Heap) {
+func printHeap(h *Heap) {
 	fmt.Printf("[")
 	for i := 1; i < h.n; i++ {
 		fmt.Printf("%d ", h.queue[i])
 	}
-	fmt.Printf("%d]\n", h.queue[i])
+	fmt.Printf("%d]\n", h.queue[len(h.queue) - 1])
 }
 
 func main() {
@@ -134,7 +134,7 @@ func main() {
 	}
 	fmt.Printf("\n")
 
-	heap_sort(s)
+	heapSort(s)
 
 	fmt.Printf("Sorted array: ")
 	for _, v := range s {
