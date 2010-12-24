@@ -18,15 +18,13 @@ type vertex = (int * int) list
 
 (* graph holding integers *)
 type graph = 
-    { mutable nvertices: int;
+    { 
+      mutable nvertices: int;
       mutable nedges: int;
       directed: bool;
       vertices: (vertex * int) array; (* each vertex is a vertex list and out-degree, 
                                         to avoid O(n) calculation of out-degree from list *)
     }
-
-(** Maximum number of vertices *)
-let maxV = 1000
 
 
 (* the undirected graph shown in Figure 5.4, page 151 
@@ -70,15 +68,21 @@ let print_graph g =
 
 (* Graph search *)
 type search_state = 
-    { processed: bool array;
+    { 
+      processed: bool array;
       discovered: bool array;
-      parent: int array        (* probably better to use int option array *)
+      parent: int array;        (* probably better to use int option array *)
+      entry_time: int array;
+      exit_time: int array;     (* time state for DFS *)
     }
 
 let initialize_search g = 
   { processed = Array.make g.nvertices false; 
     discovered = Array.make g.nvertices false; 
-    parent = Array.make g.nvertices (-1) }
+    parent = Array.make g.nvertices (-1);
+    entry_time = Array.make g.nvertices (-1);
+    exit_time = Array.make g.nvertices (-1);
+  }
 
 (* breadth-first search *)
 let bfs g state start proc_early proc_late proc_edge = 
@@ -133,3 +137,78 @@ let connected_components g =
       )
     else ()
   done
+
+(* Depth-first search *)   (* TODO: finished *)
+let dfs g state v proc_early proc_late proc_edge = 
+  let time = ref 0 in
+  let rec discover_and_process v1 v2 = 
+    if not state.discovered.(v2) then
+      (
+        state.parent.(v2) <- v1;
+        ignore (proc_edge v1 v2);
+        dfs_loop v2
+      )
+    else if not state.processed.(v2) || g.directed then
+      ignore (proc_edge v1 v2)
+    else
+      ()  
+  and dfs_loop v = 
+    let (el, _) = g.vertices.(v) in
+    state.discovered.(v) <- true;
+    time := !time + 1;
+    state.entry_time.(v) <- !time;
+    proc_early v;
+    List.iter (fun (vo, _) -> discover_and_process v vo) el;
+    proc_late v;
+    time := !time + 1;
+    state.exit_time.(v) <- !time;
+    state.processed.(v) <- true in
+  dfs_loop v
+
+  
+let find_cycles g = 
+  let state = initialize_search g in
+  dfs g state 0 
+    (fun _ -> ())
+    (fun _ -> ())
+    (fun v1 v2 -> 
+      if state.parent.(v1) != v2 then 
+        Printf.printf "Cycle from %d to %d\n" v2 v1
+      else
+        ())
+
+type edge_class = Tree | Back | Forward | Cross
+
+let edge_classification v1 v2 state = 
+  if state.parent.(v2) = v1 then
+    Tree
+  else if state.discovered.(v2) && not state.processed.(v2) then
+    Back
+  else if state.processed.(v2) && (state.entry_time.(v2) > state.entry_time.(v1)) then
+    Forward
+  else if state.processed.(v2) && (state.entry_time.(v2) < state.entry_time.(v1)) then
+    Cross
+  else
+    failwith "Unable to classify edge"
+
+
+(* topological sorting of a DAG using DFS *)
+(* proc_late is called when the vertex is finished being processed; it is then 
+   pushed on the stack. The stack reverses the order of vertices reaching the 
+   processed state in a DFS, as desired *)
+let topsort g = 
+  let state = initialize_search g in
+  let sorted = Stack.create () in
+  let proc_early v = () in
+  let proc_late v = Stack.push v sorted in
+  let process_edge v1 v2 = match edge_classification v1 v2 state with
+      Back -> print_endline "Warning: Cycle found, not a DAG.\n"
+    | _ -> () in
+  Array.iteri 
+    (fun i _ -> 
+      if not state.discovered.(i) then 
+        dfs g state i proc_early proc_late process_edge
+      else ()) g.vertices; 
+  print_string "Sort:";
+  Stack.iter (Printf.printf " %d") sorted
+
