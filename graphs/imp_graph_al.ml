@@ -81,8 +81,7 @@ let initialize_search g =
     parent = Array.make g.nvertices (-1) }
 
 (* breadth-first search *)
-let bfs g start proc_early proc_late proc_edge = 
-  let state = initialize_search g in
+let bfs g state start proc_early proc_late proc_edge = 
   let process_edge v1 v2 = 
     if not state.processed.(v2) || g.directed then
       ignore (proc_edge v1 v2)
@@ -108,14 +107,29 @@ let bfs g start proc_early proc_late proc_edge =
       state.processed.(v) <- true;
       List.iter (fun (vo, _) -> ( process_edge v vo; discover_vertex vo q v )) el;
       proc_late v
-    done;
-    state    (* we can return the search state for extracting the spanning tree*)
+    done
   )
 
 (* Do a breadth-first search for printing vertices and edges *)      
 let bfs_print g start = 
-  bfs g start 
+  let state = initialize_search g in
+  bfs g state start 
     (fun v -> Printf.printf "Processed vertex %d\n" v) 
     (fun _ -> ())
     (fun x y -> Printf.printf "Processed edge %d - %d\n" x y)
 
+(* Discover the connected components *)
+let connected_components g = 
+  let print_vertex v = Printf.printf " %d" v in
+  let state = initialize_search g in
+  let c = ref 0 in 
+  for i = 0 to (g.nvertices - 1) do
+    if not state.discovered.(i) then 
+      (
+        c := !c + 1;
+        Printf.printf "Component %d:" !c;
+        bfs g state i print_vertex (fun _ -> ()) (fun _ _ -> ());
+        print_string "\n"
+      )
+    else ()
+  done
