@@ -14,23 +14,51 @@ attacks (x1, y1) (x2, y2) = (y1 == y2) || (abs (x1 - x2) == abs (y1 - y2))
 -- check to see if a (partial) solution is valid
 checkSolution :: Solution -> Bool 
 checkSolution []      = True
-checkSolution (q:qs)  = not $ any (attacks q) qs && checkSolution qs
+checkSolution (q:qs)  = (not $ any (attacks q) qs) && checkSolution qs
 
 failure :: [a]
 failure = fail "not a solution"  -- failure == []
 
 buildSolution :: Int -> Int -> [Solution] -> [Solution]
-buildSolution n i pss 
-    | i > n     = pss
-    | otherwise = buildSolution n (i+1) newpss
-        where newpss = do
-                ps <- pss
+buildSolution n i partials 
+    | i > n     = partials
+    | otherwise = buildSolution n (i+1) newpartials
+        where newpartials = do
+                partial <- partials
                 row <- [1..n]
-                let newps = (i, row) : ps 
-                if checkSolution newps then return newps else failure
+                let newpartial = (i, row) : partial 
+                if checkSolution newpartial then return newpartial else failure
 
 nQueens :: Int -> [Solution]
 nQueens n = buildSolution n 1 [[]]
+
+queens4GenAll :: [Solution]
+queens4GenAll = do
+    sol <- [zip (reverse [1..4]) [r1, r2, r3, r4] | r1 <- [1..4], r2 <- [1..4], 
+                                                    r3 <- [1..4], r4 <- [1..4]]
+    --row1 <- [1..4]
+    --row2 <- [1..4]
+    --row3 <- [1..4]
+    --row4 <- [1..4]
+    --let sol = zip (reverse [1..4]) [row4, row3, row2, row1]
+    if not $ checkSolution sol then failure
+        else return sol
+
+queens4GenAll2 :: [Solution]
+queens4GenAll2 = 
+    filter checkSolution [zip (reverse [1..4]) [r1, r2, r3, r4] | 
+                          r1 <- [1..4], r2 <- [1..4], r3 <- [1..4], r4 <- [1..4]]
+
+-- generate all possible complete placements and check them at the end 
+buildAllThenCheck :: Int -> Int -> Solution -> [Solution]
+buildAllThenCheck n i sol 
+    | i > n     = if checkSolution sol then return sol else failure
+    | otherwise = do
+        row <- [1..n]
+        buildAllThenCheck n (i+1) ((i, row) : sol)
+
+nQueensGenAll :: Int -> [Solution]
+nQueensGenAll n = buildAllThenCheck n 1 []
 
 queens4Sols :: [Solution]
 queens4Sols = do
