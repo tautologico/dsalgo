@@ -10,18 +10,23 @@ fn rank(key: i32, a: &[i32]) -> i32 {
 
     while lo <= hi {
         let mid = lo + (hi - lo) / 2;
-        if      key < a[mid]  { hi = mid - 1; }
+
+        // array indices can't be negative in rust, so we have to protect
+        // against that
+        if      key < a[mid]  { if mid > 0 { hi = mid - 1 } else { return -1; } }
         else if key > a[mid]  { lo = mid + 1; }
-        else                  { return mid as i32;   }
+        else                  { return mid as i32; }
     }
     return -1;
 }
 
+// recursive, pure functional version
 fn rank_rec(key: i32, a: &[i32], lo: usize, hi: usize) -> i32 {
     let mid = lo + (hi - lo) / 2;
 
     if      lo > hi      { -1    }
-    else if key < a[mid] { rank_rec(key, a, lo, mid - 1) }
+    else if key < a[mid] { if mid == 0 { return -1; } 
+                           else { rank_rec(key, a, lo, mid - 1) } }
     else if key > a[mid] { rank_rec(key, a, mid + 1, hi) }
     else                 { mid as i32 }
 }
@@ -81,17 +86,21 @@ fn bench_rank2(b: &mut Bencher) {
 fn main() { 
     let whitelist = [8, 12, 21, 33, 78];
 
-    if rank(12, &whitelist) > 0 {
-        println!("Found 12");
+    let el1 = 100;
+    let r1 = rank(el1, &whitelist);
+    if r1 > 0 {
+        println!("Found {} at {}", el1, r1);
     }
     else {
-        println!("Did not find 12");
+        println!("Did not find {}", el1);
     }
 
-    if rank2(12, &whitelist) > 0 {
-        println!("Found 12");
+    let el2 = 100;
+    let r2 = rank2(el2, &whitelist);
+    if r2 > 0 {
+        println!("Found {} at {}", el2, r2);
     }
     else {
-        println!("Did not find 12");
+        println!("Did not find {}", el2);
     }
 }
