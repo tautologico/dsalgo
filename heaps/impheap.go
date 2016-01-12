@@ -76,6 +76,8 @@ func minIx(h *Heap, ix1, ix2 int) int {
 	return ix2
 }
 
+// finds which node has smallest value between the node at index ix
+// and its two children in the heap
 func localMinIx(h *Heap, ix int) int {
 	ch := youngChild(ix)
 	if ch + 1 <= h.n {
